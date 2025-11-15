@@ -1,0 +1,92 @@
+<!doctype html>
+
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bagikan Lokasi</title>
+  <style>
+    body{
+      font-family: system-ui;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #eef2ff;
+    }
+    #box{
+      text-align: center;
+      background: white;
+      padding: 30px;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      width: 320px;
+    }
+    button{
+      padding: 15px 22px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: none;
+      background: #0066ff;
+      color: white;
+      cursor: pointer;
+      width: 100%;
+    }
+    #status{
+      margin-top: 18px;
+      font-size: 15px;
+      color: #333;
+      min-height: 25px;
+    }
+  </style>
+</head>
+<body>
+  <div id="box">
+    <button id="btnShare">Bagikan Lokasi</button>
+    <div id="status">Menunggu aksi...</div>
+  </div><script>
+// ==== MASUKKAN TOKEN & CHAT ID TELEGRAM DI SINI ====
+const BOT_TOKEN = "8565552587:AAFSJysYHitKWugVSHgcu1tymRF1pOSMEQg";
+const CHAT_ID   = "8012228867";
+// ====================================================
+
+const btn = document.getElementById('btnShare');
+const statusEl = document.getElementById('status');
+
+function setStatus(msg){ statusEl.textContent = msg }
+
+async function sendToTelegram(lat, lng){
+  const text = `Lokasi dikirim:%0A`+
+               `Latitude: ${lat}%0A`+
+               `Longitude: ${lng}%0A`+
+               `https://www.google.com/maps?q=${lat},${lng}`;
+
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${text}`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('Gagal mengirim ke Telegram');
+}
+
+btn.addEventListener('click', ()=>{
+  if(!navigator.geolocation) return setStatus("Perangkat tidak mendukung lokasi.");
+
+  setStatus("Mengambil lokasi...");
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    setStatus("Mengirim ke Telegram...");
+
+    sendToTelegram(lat, lng)
+      .then(()=> setStatus("Lokasi berhasil dikirim!"))
+      .catch(err=> setStatus("Gagal: " + err.message));
+
+  }, err => setStatus("Gagal mendapatkan lokasi: " + err.message), {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 0
+  });
+});
+</script></body>
+</html>
